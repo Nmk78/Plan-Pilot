@@ -1,70 +1,62 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Text, View, useWindowDimensions } from "react-native";
+import React from "react";
+import GradientHeader from "@/components/GradientBg";
+import Schedule from "@/components/TimeTable";
+import {
+  daysOfWeek,
+  generateDailySchedule,
+  subjects,
+  weeklySchedule,
+} from "@/constants/Constants";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const Home = () => {
+  const { width } = useWindowDimensions(); // Get screen width
 
-export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
+    <View className="flex flex-1 bg-background justify-start">
+      <View className="relative max-w-full">
+        <GradientHeader />
+        {/* <Link href="/home" className=" font-bold text-5xl text-teal-50">Home</Link> */}
+        <View className="absolute h-10 flex flex-row align-bottom bottom-4 z-50 mx-5">
+          <Text className=" w-1/3 text-text text-3xl font-medium">Tue</Text>
+          <View className="flex flex-col w-1/3 bg-black- justify-end">
+            <Text className=" text-text text-3xl mx-auto font-semibold underline">
+              Now
+            </Text>
+            <Text className=" text-text text-2xl mx-auto font-medium">Eng</Text>
+          </View>
+          <View className="flex flex-col w-1/3 bg-black- justify-end">
+            <Text className=" text-text text-3xl ml-auto font-semibold underline">
+              Next
+            </Text>
+            <Text className=" text-text text-2xl ml-auto font-semibold">
+              Math
+            </Text>
+          </View>
+        </View>
+      </View>
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+      <View className="flex flex-1 mt-3 px-3">
+        {/* <TimelineComponent /> */}
+        <Schedule
+        mode="view"
+          scheduleGenerateFn={generateDailySchedule(weeklySchedule)}
+          weeklySchedule={weeklySchedule}
+          daysOfWeek={daysOfWeek}
+          subjects={subjects}
+        />
+      </View>
+    </View>
+  );
+};
+
+export default Home;
+
+// const styles = StyleSheet.create({
+//     container :{
+//         display: 'flex',
+//         flex: 1,
+//         alignItems:'center',
+//         justifyContent:'center'
+//     }
+// })schedule: any, width: numberschedule: any, width?: number
