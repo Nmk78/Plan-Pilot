@@ -214,8 +214,8 @@ const Schedule: React.FC<ScheduleProps> = ({
         style={{
           container: {
             width: width - 35,
-            paddingBottom: 50,
-            paddingTop: 20,
+            paddingBottom: 40,
+            paddingTop: 40,
             backgroundColor: "#031430"
           },
           nowLine: {
@@ -224,7 +224,7 @@ const Schedule: React.FC<ScheduleProps> = ({
               height: 10,
               backgroundColor: "#fefefe",
               borderRadius: 5,
-              zIndex: 5,
+              zIndex: 90,
               elevation: 5,
             },
             line: {

@@ -36,7 +36,7 @@ const Home = () => {
         </View>
       </View>
 
-      <View className="flex flex-1 mt-3 px-3">
+      <View className="flex flex-1 items-center">
         {/* <TimelineComponent /> */}
         <Schedule
         mode="view"

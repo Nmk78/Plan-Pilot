@@ -1,64 +1,72 @@
 import moment from "moment";
 import { useWindowDimensions } from "react-native";
+import tinycolor from "tinycolor2";
 
 export const subjects = [
   {
-    name: "Math",
+    id: 1,
+    title: "Math",
     teacher: "Mr. Smith",
     room: "101",
     icon: "📚",
-    color: "#0066ff",
+    color: "#0066fa",
   },
   {
-    name: "English",
+    id: 2,
+    title: "English",
     teacher: "Mrs. Johnson",
     room: "102",
     icon: "📝",
     color: "#FEDC01",
   },
   {
-    name: "History",
+    id: 3,
+    title: "History",
     teacher: "Mr. Brown",
     room: "103",
     icon: "🏛️",
     color: "#FE7273",
   },
   {
-    name: "Science",
+    id: 4,
+    title: "Science",
     teacher: "Mrs. Green",
     room: "104",
     icon: "🔬",
     color: "#faad99",
   },
   {
-    name: "CS",
+    id: 5,
+    title: "CS",
     teacher: "Mrs. Green",
     room: "104",
     icon: "💻",
     color: "#FEDCe1",
   },
   {
-    name: "AI",
+    id: 6,
+    title: "AI",
     teacher: "Mrs. Green",
     room: "104",
     icon: "🤖",
     color: "#F66C01",
   },
   {
-    name: "ML",
+    id: 7,
+    title: "ML",
     teacher: "Mrs. Green",
     room: "104",
     icon: "⚙️",
     color: "#53DC01",
   },
   {
-    name: "Leisure",
+    id: 8,
+    title: "Leisure",
     teacher: "Mrs. Green",
     room: "104",
     icon: "🍀",
     color: "#DC0199",
   },
-  // Add more subjects as needed
 ];
 
 export const daysOfWeek: { [key: string]: number } = {
@@ -193,7 +201,7 @@ export const weeklySchedule = {
 
 //       events.push({
 //         icon: `${event.subject.icon}`,
-//         title: `${event.subject.name}`,
+//         title: `${event.subject.title}`,
 //         color: event.subject.color,
 //         startDate,
 //         endDate,
@@ -242,7 +250,7 @@ export const weeklySchedule = {
 
 //     events.push({
 //       icon: `${event.subject.icon}`,
-//       title: `${event.subject.name}`,
+//       title: `${event.subject.title}`,
 //       color: event.subject.color,
 //       startDate,
 //       endDate,
@@ -273,7 +281,7 @@ export const generateDailySchedule =
         endTime: string;
         subject: {
           icon: any;
-          name: string;
+          title: string;
           teacher: string;
           room: string;
           color: string;
@@ -298,7 +306,7 @@ export const generateDailySchedule =
 
         events.push({
           icon: `${event.subject.icon}`,
-          title: `${event.subject.name}`,
+          title: `${event.subject.title}`,
           color: event.subject.color,
           startDate,
           endDate,
@@ -310,3 +318,24 @@ export const generateDailySchedule =
 
     return events;
   };
+
+
+// Function to get a contrasting accent color
+
+export const getAccentColor = (color:any) => {
+  const baseColor = tinycolor(color);
+  const isLight = baseColor.isLight();
+
+  // If the base color is light, darken it, and if it's dark, lighten it
+  const accentColor = isLight ? baseColor.darken(15) : baseColor.lighten(15);
+
+  console.log(accentColor.toHexString())
+  return accentColor.toHexString();
+};
+
+export const getComplementaryColor = (color: string): string => {
+  const baseColor = tinycolor(color);
+  const complementaryColor = baseColor.complement();
+
+  return complementaryColor.toHexString();
+};

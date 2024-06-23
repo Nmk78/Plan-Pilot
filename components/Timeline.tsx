@@ -152,7 +152,7 @@ export const TimelineComponent = () => {
 
   return (
     <>
-      <GestureHandlerRootView className="mb-0" style={{ flex: 1, alignItems:"center", backgroundColor:"#031430"}}>
+      <GestureHandlerRootView className="mb-0 flex flex-1 items-center bg-background" >
         <Schedule
           scheduleGenerateFn={generateDailySchedule(weeklySchedule)}
           weeklySchedule={weeklySchedule}
