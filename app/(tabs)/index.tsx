@@ -1,70 +1,186 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from '@firebase/auth';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { initializeApp } from "firebase/app";
+// App.js
 
-export default function HomeScreen() {
+import { NativeWindStyleSheet } from "nativewind";
+
+NativeWindStyleSheet.setOutput({
+  default: "native",
+});
+
+export const firebaseConfig = {
+    apiKey: "AIzaSyBKyBNU6fFRTi-kK0cSHuQ6hOKRLEMhf1Q",
+    authDomain: "plan-pilot-d86f1.firebaseapp.com",
+    projectId: "plan-pilot-d86f1",
+    storageBucket: "plan-pilot-d86f1.appspot.com",
+    messagingSenderId: "167164672245",
+    appId: "1:167164672245:web:fd5763c5a5e1539b71edbc",
+    measurementId: "G-58NCD8QZ10"
+  };
+
+  export const app = initializeApp(firebaseConfig);
+
+const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication, err }:any) => {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.authContainer}>
+       <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
+       <TextInput
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+        placeholder="Email"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        secureTextEntry
+      />
+       {err ? <Text style={styles.errorText}>{err}</Text> : null}
+
+      <View style={styles.buttonContainer}>
+        <Button title={isLogin ? 'Sign In' : 'Sign Up'} onPress={handleAuthentication} color="#3498db" />
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
+          {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+        </Text>
+      </View>
+    </View>
   );
 }
 
+
+const AuthenticatedScreen = ({ user, handleAuthentication }: any) => {
+  return (
+    <View style={styles.authContainer}>
+      <Text style={styles.title}>Welcome</Text>
+      <Text style={styles.emailText}>{user.email}</Text>
+      <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
+    </View>
+  );
+};
+
+//@ts-ignore
+export default HomeScreen = () => {
+  const [email, setEmail] = useState('');
+  const [err, setErr] = useState<String | undefined>('');
+  const [password, setPassword] = useState('');
+  const [user, setUser] = useState(null); // Track user authentication state
+  const [isLogin, setIsLogin] = useState(true);
+
+  const auth = getAuth(app);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      //@ts-ignore
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  
+  const handleAuthentication = async () => {
+    try {
+      setErr(undefined);
+      if (user) {
+        // If user is already authenticated, log out
+        console.log('User logged out successfully!');
+        await signOut(auth);
+      } else {
+        // Sign in or sign up
+        if (isLogin) {
+          // Sign in
+          await signInWithEmailAndPassword(auth, email, password);
+          console.log('User signed in successfully!');
+        } else {
+          // Sign up
+          await createUserWithEmailAndPassword(auth, email, password);
+          console.log('User created successfully!');
+        }
+      }
+    } catch (error:any) {
+      console.error('Authentication error:', error);
+      setErr(error.message);
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      {user ? (
+        // Show user's email if user is authenticated
+        <AuthenticatedScreen user={user} handleAuthentication={handleAuthentication} />
+      ) : (
+        // Show sign-in or sign-up form if user is not authenticated
+        <AuthScreen
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          isLogin={isLogin}
+          setIsLogin={setIsLogin}
+          handleAuthentication={handleAuthentication}
+          err={err}
+        />
+      )}
+    </ScrollView>
+  );
+}
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    padding: 16,
+    backgroundColor: '#f0f0f0',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    marginBottom: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  authContainer: {
+    width: '80%',
+    maxWidth: 400,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#3498ff',
+  },
+  input: {
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    marginBottom: 16,
+    padding: 8,
+    borderRadius: 4,
+  },
+  buttonContainer: {
+    marginBottom: 16,
+  },
+  toggleText: {
+    color: '#3498db',
+    textAlign: 'center',
+  },
+  bottomContainer: {
+    marginTop: 20,
+  },
+  emailText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
   },
 });
