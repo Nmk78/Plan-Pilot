@@ -1,135 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from '@firebase/auth';
 
-import { initializeApp } from "firebase/app";
 // App.js
 
 import { NativeWindStyleSheet } from "nativewind";
+import GradientHeader from '@/components/GradientBg';
+import Schedule from '@/components/TimeTable';
+import { daysOfWeek, generateDailySchedule, subjects, weeklySchedule } from '@/constants/Constants';
 
-NativeWindStyleSheet.setOutput({
-  default: "native",
-});
-
-export const firebaseConfig = {
-    apiKey: "AIzaSyBKyBNU6fFRTi-kK0cSHuQ6hOKRLEMhf1Q",
-    authDomain: "plan-pilot-d86f1.firebaseapp.com",
-    projectId: "plan-pilot-d86f1",
-    storageBucket: "plan-pilot-d86f1.appspot.com",
-    messagingSenderId: "167164672245",
-    appId: "1:167164672245:web:fd5763c5a5e1539b71edbc",
-    measurementId: "G-58NCD8QZ10"
-  };
-
-  export const app = initializeApp(firebaseConfig);
-
-const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication, err }:any) => {
-  return (
-    <View style={styles.authContainer}>
-       <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
-       <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-      />
-       {err ? <Text style={styles.errorText}>{err}</Text> : null}
-
-      <View style={styles.buttonContainer}>
-        <Button title={isLogin ? 'Sign In' : 'Sign Up'} onPress={handleAuthentication} color="#3498db" />
-      </View>
-
-      <View style={styles.bottomContainer}>
-        <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
-          {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-
-const AuthenticatedScreen = ({ user, handleAuthentication }: any) => {
-  return (
-    <View style={styles.authContainer}>
-      <Text style={styles.title}>Welcome</Text>
-      <Text style={styles.emailText}>{user.email}</Text>
-      <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
-    </View>
-  );
-};
 
 //@ts-ignore
 export default HomeScreen = () => {
-  const [email, setEmail] = useState('');
-  const [err, setErr] = useState<String | undefined>('');
-  const [password, setPassword] = useState('');
-  const [user, setUser] = useState(null); // Track user authentication state
-  const [isLogin, setIsLogin] = useState(true);
-
-  const auth = getAuth(app);
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      //@ts-ignore
-      setUser(user);
-    });
-
-    return () => unsubscribe();
-  }, [auth]);
-
-  
-  const handleAuthentication = async () => {
-    try {
-      setErr(undefined);
-      if (user) {
-        // If user is already authenticated, log out
-        console.log('User logged out successfully!');
-        await signOut(auth);
-      } else {
-        // Sign in or sign up
-        if (isLogin) {
-          // Sign in
-          await signInWithEmailAndPassword(auth, email, password);
-          console.log('User signed in successfully!');
-        } else {
-          // Sign up
-          await createUserWithEmailAndPassword(auth, email, password);
-          console.log('User created successfully!');
-        }
-      }
-    } catch (error:any) {
-      console.error('Authentication error:', error);
-      setErr(error.message);
-    }
-  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {user ? (
-        // Show user's email if user is authenticated
-        <AuthenticatedScreen user={user} handleAuthentication={handleAuthentication} />
-      ) : (
-        // Show sign-in or sign-up form if user is not authenticated
-        <AuthScreen
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          isLogin={isLogin}
-          setIsLogin={setIsLogin}
-          handleAuthentication={handleAuthentication}
-          err={err}
-        />
-      )}
-    </ScrollView>
+    <View className="flex flex-1 bg-background justify-start">
+    <View className="relative max-w-full">
+      <GradientHeader />
+      {/* <Link href="/home" className=" font-bold text-5xl text-teal-50">Home</Link> */}
+      <View className="absolute h-10 flex flex-row align-bottom bottom-4 z-50 mx-5">
+        <Text className=" w-1/3 text-text text-3xl font-medium">Tue</Text>
+        <View className="flex flex-col w-1/3 bg-black- justify-end">
+          <Text className=" text-text text-3xl mx-auto font-semibold underline">
+            Now
+          </Text>
+          <Text className=" text-text text-2xl mx-auto font-medium">Eng</Text>
+        </View>
+        <View className="flex flex-col w-1/3 bg-black- justify-end">
+          <Text className=" text-text text-3xl ml-auto font-semibold underline">
+            Next
+          </Text>
+          <Text className=" text-text text-2xl ml-auto font-semibold">
+            Math
+          </Text>
+        </View>
+      </View>
+    </View>
+
+    <View className="flex flex-1 items-center">
+      {/* <TimelineComponent /> */}
+      <Schedule
+      mode="view"
+        scheduleGenerateFn={generateDailySchedule(weeklySchedule)}
+        weeklySchedule={weeklySchedule}
+        daysOfWeek={daysOfWeek}
+        subjects={subjects}
+      />
+    </View>
+  </View>
   );
 }
 const styles = StyleSheet.create({

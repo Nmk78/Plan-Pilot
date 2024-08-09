@@ -33,126 +33,10 @@ export const TimelineComponent = () => {
     now.setHours(hours, minutes, 0, 0); // Set hours, minutes, and reset seconds and milliseconds
     return now;
   };
-  const data = [
-    {
-      // time:parseTimeStringToDate("9:00"),
-      time: "8:00",
-      // endTime: "9:00",
-      title: "Archery Training",
-      description:
-        "The Beginner Archery and Beginner Crossbow course does not require you to bring any equipment, since everything you need will be provided for the course.",
-      lineColor: "#12da",
-      // icon: require('../img/archery.png'),
-    },
-    {
-      time: "10:45",
-      title: "Play Badminton",
-      description:
-        "Badminton is a racquet sport played using racquets to hit a shuttlecock across a net.",
-      icon: require("../assets/flags/thai.svg"),
-    },
-    { time: "12:00", title: "Lunch" },
-    {
-      time: "14:00",
-      title: "Watch Soccer",
-      description:
-        "Team sport played between two teams of eleven players with a spherical ball.",
-      lineColor: "#f00",
-      icon: (
-        <Image
-          source={require("@/assets/flags/thai.svg")}
-          style={{
-            width: 90,
-            height: 90,
-            borderRadius: 30,
-          }}
-          resizeMode="cover"
-        />
-      ),
-    },
-    {
-      time: "16:30",
-      title: "Go to Fitness center",
-      description: "Look out for the Best Gym & Fitness Centers around me :)",
-      icon: require("../assets/images/partial-react-logo.png"),
-    },
-    {
-      time: "14:00",
-      title: "Watch Soccer",
-      description:
-        "Team sport played between two teams of eleven players with a spherical ball.",
-      lineColor: "#f00",
-      icon: (
-        <Image
-          source={require("@/assets/flags/thai.svg")}
-          style={{
-            width: 90,
-            height: 90,
-            borderRadius: 30,
-          }}
-          resizeMode="cover"
-        />
-      ),
-    },
-    {
-      time: "16:30",
-      title: "Go to Fitness center",
-      description: "Look out for the Best Gym & Fitness Centers around me :)",
-      icon: require("../assets/images/partial-react-logo.png"),
-    },
-    {
-      time: "14:00",
-      title: "Watch Soccer",
-      description:
-        "Team sport played between two teams of eleven players with a spherical ball.",
-      lineColor: "#f00",
-      icon: (
-        <Image
-          source={require("@/assets/flags/thai.svg")}
-          style={{
-            width: 90,
-            height: 90,
-            borderRadius: 30,
-          }}
-          resizeMode="cover"
-        />
-      ),
-    },
-    {
-      time: "16:30",
-      title: "Go to Fitness center",
-      description: "Look out for the Best Gym & Fitness Centers around me :)",
-      icon: require("../assets/images/partial-react-logo.png"),
-    },
-    {
-      time: "14:00",
-      title: "Watch Soccer",
-      description:
-        "Team sport played between two teams of eleven players with a spherical ball.",
-      lineColor: "#f00",
-      icon: (
-        <Image
-          source={require("@/assets/flags/thai.svg")}
-          style={{
-            width: 90,
-            height: 90,
-            borderRadius: 30,
-          }}
-          resizeMode="cover"
-        />
-      ),
-    },
-    {
-      time: "16:30",
-      title: "Go to Fitness center",
-      description: "Look out for the Best Gym & Fitness Centers around me :)",
-      icon: require("../assets/images/partial-react-logo.png"),
-    },
-  ];
 
   return (
     <>
-      <GestureHandlerRootView className="mb-0 flex flex-1 items-center bg-background" >
+      <GestureHandlerRootView className="mb-0 h-auto flex flex-1 items-center bg-background" >
         <Schedule
           scheduleGenerateFn={generateDailySchedule(weeklySchedule)}
           weeklySchedule={weeklySchedule}
@@ -160,7 +44,6 @@ export const TimelineComponent = () => {
           subjects={subjects}
           mode="view-edit"
         />
-
       </GestureHandlerRootView>
     </>
   );
