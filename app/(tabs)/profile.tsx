@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import {
   SafeAreaView,
@@ -8,6 +8,8 @@ import {
   Image,
   TextInput,
   Button,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import Home from "."; // Adjust the path as needed
 import { TimelineComponent } from "@/components/Timeline"; // Adjust the path as needed
@@ -31,28 +33,46 @@ import {
   onAuthStateChanged,
   signOut,
 } from "@firebase/auth";
-
 import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
+import {
+  initializeAuth,
+  getReactNativePersistence,
+  updateProfile,
+} from "firebase/auth";
 import { NativeWindStyleSheet } from "nativewind";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { app, auth, db, storage } from "../../firebaseconfig"; // Import from your initialization file
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  uploadBytesResumable,
+  deleteObject,
+  listAll,
+} from "firebase/storage";
+import * as ImagePicker from "expo-image-picker";
+import { Alert } from "react-native";
 const Tab = createMaterialTopTabNavigator();
 
 NativeWindStyleSheet.setOutput({
   default: "native",
 });
 
-export const firebaseConfig = {
-  apiKey: "AIzaSyBKyBNU6fFRTi-kK0cSHuQ6hOKRLEMhf1Q",
-  authDomain: "plan-pilot-d86f1.firebaseapp.com",
-  projectId: "plan-pilot-d86f1",
-  storageBucket: "plan-pilot-d86f1.appspot.com",
-  messagingSenderId: "167164672245",
-  appId: "1:167164672245:web:fd5763c5a5e1539b71edbc",
-  measurementId: "G-58NCD8QZ10",
-};
-
-export const app = initializeApp(firebaseConfig);
+NativeWindStyleSheet.setOutput({
+  default: "native",
+});
 
 const AuthScreen = ({
+  name,
+  setUserame,
   email,
   setEmail,
   password,
@@ -61,10 +81,22 @@ const AuthScreen = ({
   setIsLogin,
   handleAuthentication,
   err,
+  loading,
 }: any) => {
   return (
     <View style={styles.authContainer}>
       <Text style={styles.title}>{isLogin ? "Sign In" : "Sign Up"}</Text>
+
+      {isLogin == false && (
+        <TextInput
+          className="  bg-slate-200"
+          style={styles.input}
+          value={name}
+          onChangeText={setUserame}
+          placeholder="Name"
+          autoCapitalize="none"
+        />
+      )}
       <TextInput
         className="  bg-slate-200"
         style={styles.input}
@@ -84,11 +116,19 @@ const AuthScreen = ({
       {err ? <Text style={styles.errorText}>{err}</Text> : null}
 
       <View style={styles.buttonContainer}>
-        <Button
-          title={isLogin ? "Sign In" : "Sign Up"}
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonLoading]}
           onPress={handleAuthentication}
-          color="#3498db"
-        />
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {isLogin ? "Sign In" : "Sign Up"}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.bottomContainer}>
@@ -102,36 +142,91 @@ const AuthScreen = ({
   );
 };
 
-const AuthenticatedScreen = ({ user, handleAuthentication }: any) => {
-  return (
-    <View style={styles.authContainer}>
-      <Text style={styles.title}>Welcome</Text>
-      <Text style={styles.emailText}>{user.email}</Text>
-      <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
-    </View>
-  );
-};
-
 const ProfileComponent = () => {
   const { isOpen, onToggle } = useDisclose();
+  const [username, setUserame] = useState("");
   const [email, setEmail] = useState("");
   const [err, setErr] = useState<String | undefined>("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null); // Track user authentication state
+  const [user, setUser] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [imageUri, setImageUri] = useState<string | null | undefined>(null);
+  const [imageName, setImageName] = useState<string | null | undefined>(null);
 
-  const auth = getAuth(app);
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      //@ts-ignore
-      setUser(user);
+  const pickImage = async () => {
+    const result: any = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [3, 3],
+      quality: 0.4,
     });
 
-    return () => unsubscribe();
-  }, [auth]);
+    if (!result.cancelled) {
+      console.log("Image picked:", result.assets[0].fileName);
+      setImageUri(result.assets[0].uri);
+      setImageName(result.assets[0].fileName);
+
+      handleUpload(imageUri, imageName);
+    }
+  };
+
+  const handleUpload = async (imageUri: any, imageName: any) => {
+    if (imageUri && imageName) {
+      console.log("🚩Uploading image");
+      try {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        console.log("🚀 ~ handleUpload ~ blob:", blob);
+        await uploadPhoto(blob, imageName);
+      } catch (error) {
+        console.error("Error uploading photo:", error);
+      }
+    }
+  };
+
+  const uploadPhoto = async (blob: Blob, imageName: string) => {
+    try {
+      const storage = getStorage();
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error("User is not logged in");
+      }
+
+      const photoRef = ref(storage, `user_photos/${user.uid}/${imageName}`);
+      const uploadTask = uploadBytesResumable(photoRef, blob);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+        },
+        (error) => {
+          console.error("Upload error:", error);
+        },
+        async () => {
+          const photoURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log("Photo URL:", photoURL);
+
+          // Update the user's profile with the new photo URL
+          await updateProfile(user, { photoURL: photoURL });
+          console.log("Profile updated with new photo URL!");
+        }
+      );
+    } catch (error) {
+      console.error("Error in uploadPhoto:", error);
+    }
+  };
 
   const handleAuthentication = async () => {
     try {
+      setLoading(true);
       setErr(undefined);
       if (user) {
         // If user is already authenticated, log out
@@ -141,36 +236,133 @@ const ProfileComponent = () => {
         // Sign in or sign up
         if (isLogin) {
           // Sign in
-          await signInWithEmailAndPassword(auth, email, password);
+          let userCredential = await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
           console.log("User signed in successfully!");
+          const userDoc = await getDoc(
+            doc(db, "users", userCredential.user.uid)
+          );
+          if (userDoc.exists()) {
+            setUserInfo(userDoc.data());
+            console.log("🚀 ~ handleAuthentication ~ u:", userInfo);
+          } else {
+            console.log("No such document!");
+          }
         } else {
           // Sign up
-          await createUserWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          const user = userCredential.user;
           console.log("User created successfully!");
+
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Store user details in Firestore
+          await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            username: username,
+            photoURL: user.photoURL,
+            createdAt: new Date(),
+          });
+
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            console.log("🚀 ~ handleAuthentication ~ u:", userDoc.data());
+            setUserInfo(userDoc.data());
+          } else {
+            console.log("No such document!");
+          }
         }
       }
     } catch (error: any) {
       console.error("Authentication error:", error);
       setErr(error.message);
+    } finally {
+      setLoading(false); // Set loading to false when authentication is complete
     }
   };
+
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) { // Check if user is not null
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserInfo(userDoc.data());
+          } else {
+            console.log("No such document!");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setLoading(false); // Set loading to false after data is fetched
+        }
+      } else {
+        console.log("No user is logged in.");
+        setLoading(false); // Make sure to stop loading if there's no user
+      }
+    };
+  
+    fetchData();
+  }, [user]);
+  
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        setUser(authUser);
+        // Fetch user data from Firestore
+        const userDocRef = doc(db, "users", authUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUserInfo(userDoc.data());
+        } else {
+          console.log("No such document!");
+        }
+      } else {
+        setUser(null);
+        setUserInfo(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
 
   return (
     <>
       {user ? (
-        // Show user's email if user is authenticated
         <SafeAreaView className="bg-background flex flex-1">
           <View className="w-full h-60 justify-center items-center mt-12 pb-3 border-b-[0.5px] border-text">
-            <Image
-              source={require("../../assets/images/myat.jpg")}
-              className="w-40 h-40 rounded-full object-cover"
-              style={{ objectFit: "cover" }}
-            />
+            {loading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: 150, height: 150, borderRadius: 80 }}
+              />
+            ) : userInfo?.photo ? (
+              <Image
+                source={{ uri: userInfo.photo }}
+                style={{ width: 150, height: 150, borderRadius: 80 }}
+              />
+            ) : (
+              <Text className="text-white">Select an image</Text>
+            )}
             <Text className="text-text text-3xl font-semibold mt-3">
-              Nay Myo Khant
+              {userInfo?.username}
+            </Text>
+            <Text className="text-text text-xl font-light my-2">
+              {userInfo?.email}
             </Text>
           </View>
-          {/* <LoginOrRegister/> */}
           <Tab.Navigator
             screenOptions={{
               tabBarStyle: styles.tabBar,
@@ -192,7 +384,7 @@ const ProfileComponent = () => {
                   translateY: 34,
                 }}
                 animate={{
-                  translateY: 0,
+                  translateY: 40,
                   scale: 1,
                   opacity: 1,
                   transition: {
@@ -205,7 +397,7 @@ const ProfileComponent = () => {
                   },
                 }}
                 exit={{
-                  translateY: 34,
+                  translateY: 0,
                   scale: 0.5,
                   opacity: 0,
                   transition: {
@@ -220,7 +412,7 @@ const ProfileComponent = () => {
                 <IconButton
                   mb="4"
                   variant="solid"
-                  bg="blue.100"
+                  bg="blue.500"
                   colorScheme="indigo"
                   borderRadius="full"
                   icon={
@@ -228,28 +420,10 @@ const ProfileComponent = () => {
                       onPress={handleAuthentication}
                       as={MaterialIcons}
                       size="6"
-                      name="location-pin"
+                      name="logout"
                       _dark={{
                         color: "warmGray.50",
                       }}
-                      color="warmGray.50"
-                    />
-                  }
-                />
-                <IconButton
-                  mb="4"
-                  variant="solid"
-                  bg="yellow.400"
-                  colorScheme="yellow"
-                  borderRadius="full"
-                  icon={
-                    <Icon
-                      as={MaterialCommunityIcons}
-                      _dark={{
-                        color: "warmGray.50",
-                      }}
-                      size="6"
-                      name="microphone"
                       color="warmGray.50"
                     />
                   }
@@ -267,13 +441,14 @@ const ProfileComponent = () => {
                         color: "warmGray.50",
                       }}
                       size="6"
-                      name="video"
+                      name="plus"
                       color="warmGray.50"
                     />
                   }
                 />
                 <IconButton
                   mb="4"
+                  onPress={pickImage}
                   variant="solid"
                   bg="red.500"
                   colorScheme="red"
@@ -317,6 +492,8 @@ const ProfileComponent = () => {
       ) : (
         <SafeAreaView className="bg-background flex justify-center items-center flex-1">
           <AuthScreen
+            usrername={username}
+            setUserame={setUserame}
             email={email}
             setEmail={setEmail}
             password={password}
@@ -325,6 +502,7 @@ const ProfileComponent = () => {
             setIsLogin={setIsLogin}
             handleAuthentication={handleAuthentication}
             err={err}
+            loading={loading} // Pass loading state to AuthScreen
           />
         </SafeAreaView>
       )}
@@ -335,6 +513,10 @@ const ProfileComponent = () => {
 export default ProfileComponent;
 
 const styles = StyleSheet.create({
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
   tabBar: {
     width: "100%",
     backgroundColor: "#031430",
@@ -382,6 +564,18 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
+  button: {
+    backgroundColor: "#3498db",
+    padding: 12,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+  },
+  buttonLoading: {
+    backgroundColor: "#2980b9",
+  },
+
   buttonContainer: {
     marginBottom: 16,
   },

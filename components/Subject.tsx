@@ -5,7 +5,7 @@ export const SubjectCard = ({ item, onOpen, id = 1 }: any) => {
   // const { isOpen, onOpen, onClose } = useDisclose();
   let accent = getAccentColor(item.color);
   let complementColor = getComplementaryColor(item.color);
-  console.log("🚀 ~ SubjectCard ~ accent:", accent);
+  // console.log("🚀 ~ SubjectCard ~ accent:", accent);
   return (
     <TouchableOpacity
       onPress={(e) => {
