@@ -167,7 +167,8 @@ const Tables = () => {
         </Text>
       </View>
       <TimelineComponent />
-      <Actionsheet isOpen={isOpen} onClose={onClose}>
+      {/* //TODO: Comment out this */}
+      {/* <Actionsheet isOpen={isOpen} onClose={onClose}>
         <Actionsheet.Content backgroundColor="#031430">
           <Box
             className="gap-y-3 pb-5 focus:pb-80"
@@ -233,7 +234,7 @@ const Tables = () => {
             </Box>
           </Box>
         </Actionsheet.Content>
-      </Actionsheet>
+      </Actionsheet> */}
     </SafeAreaView>
   );
 };

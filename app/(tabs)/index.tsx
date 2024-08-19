@@ -40,8 +40,8 @@ export default HomeScreen = () => {
       {/* <TimelineComponent /> */}
       <Schedule
       mode="view"
-        scheduleGenerateFn={generateDailySchedule(weeklySchedule)}
-        weeklySchedule={weeklySchedule}
+        TimeTableGenerateFn={generateDailySchedule(weeklySchedule)}
+        weeklyTimeTable={weeklySchedule}
         daysOfWeek={daysOfWeek}
         subjects={subjects}
       />

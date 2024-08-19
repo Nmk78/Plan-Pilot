@@ -8,18 +8,9 @@ export const TimeTableCard = ({ timeTable, active }: any) => {
   let width: string = active ? "100%" : " 90%";
   return (
     <View
-      //   onPress={(e) => {
-      //     Alert.alert("Alert");
-      //     console.log(e);
-
-      //     return;
-      //   }}
-      //   activeOpacity={0.9} // Control opacity when pressed
       style={{
-        //   backgroundColor: item.color,
         borderRadius: 10,
         elevation: 90,
-        //   zIndex: style.left < 61 ? 99 : 5,
       }}
       //@ts-ignore
       className={`${

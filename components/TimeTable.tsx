@@ -2,9 +2,8 @@ import React, { useEffect, useReducer, useRef, useState } from "react";
 import moment, { duration } from "moment";
 import Timetable from "react-native-calendar-timetable"; // Replace with the actual import path
 import {
-  Alert,
-  Animated,
   Button,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -17,53 +16,23 @@ import DateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import IconSelector from "./IconSelector";
+import { Task } from "./TaskCard";
+import CURD_Tasks from "./CURD_Tasks";
 
-interface ScheduleProps {
-  scheduleGenerateFn: (daySchedule: any, dayIndex: number) => any[];
-  weeklySchedule: any;
+interface TimeTableProps {
+  TimeTableGenerateFn: (dayTimeTable: any, dayIndex: number) => any[];
+  weeklyTimeTable: any;
   daysOfWeek: any;
   subjects: any;
-  mode: "view" | "view-edit"
+  mode: "view" | "view-edit";
 }
 
-const Task = ({ style, item, onOpen, mode, id=1 }: any) => {
-  // const { isOpen, onOpen, onClose } = useDisclose();
-
-  return (
-    <TouchableOpacity
-      onPress={(e) => {
-        // Alert.alert("Alert")
-        // console.log(e)
-        if(mode === "view-edit"){
-          onOpen();
-        }
-        return
-      }}
-      activeOpacity={0.9} // Control opacity when pressed
-      style={{
-        ...style,
-        left: style.left > 61 ? style.left - 70 : style.left - 10,
-        backgroundColor: item.color,
-        // width: style.width ,
-        width: "auto",
-        borderRadius: 10,
-        elevation: 90,
-        zIndex: style.left < 61 ? 99 : 5,
-      }}
-      className="flex flex-shrink flex-col mr-2 px-5 items-center justify-center"
-    >
-      <Text className=" mix-blend-color-dodge font-semibold">{item.title}</Text>
-      <Text>{item.teacher}</Text>
-      <Text>{item.room}</Text>
-    </TouchableOpacity>
-  );
-};
-
-const Schedule: React.FC<ScheduleProps> = ({
-  scheduleGenerateFn,
-  weeklySchedule,
-  mode
-}: ScheduleProps) => {
+const TimeTable: React.FC<TimeTableProps> = ({
+  TimeTableGenerateFn,
+  weeklyTimeTable,
+  mode,
+}: TimeTableProps) => {
   const [items, setItems] = useState<any>([]);
   const currentDayOfWeek = moment().isoWeekday(); // Get current day of the week (1 = Monday, ..., 7 = Sunday)
   const { width, height } = useWindowDimensions(); // Get screen width
@@ -74,9 +43,22 @@ const Schedule: React.FC<ScheduleProps> = ({
   const [id, setId] = useState(null);
   const [actionSheetMode, setActionSheetMode] = useState("start"); // Track current actionSheetMode
   const [showPicker, setShowPicker] = useState(false);
+  const [icon, setIcon] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
+  const { isOpen, onOpen, onClose } = useDisclose(false);
+  const [task, setTask] = useState(null);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  function scheduleReducer(state: any, action: any) {
+useEffect(() => {
+  if (hasMounted) {
+    onOpen();
+  } else {
+    setHasMounted(true);
+  }
+}, [task]);
+
+  function TimeTableReducer(state: any, action: any) {
     switch (action.type) {
       case "ADD_EVENT":
         return [...state, action.payload];
@@ -93,8 +75,8 @@ const Schedule: React.FC<ScheduleProps> = ({
     }
   }
 
-  // const [state, dispatch] = useReducer(scheduleReducer, data );
-  // const setDate = (event: DateTimePickerEvent, date: Date) => {
+  //TODO: Here is dispatch function
+  // const [state, dispatch] = useReducer(TimeTableReducer, data );
   const onTimeChange = (
     event: any,
     selectedDate: React.SetStateAction<Date | undefined>
@@ -149,7 +131,6 @@ const Schedule: React.FC<ScheduleProps> = ({
     // setTime( );
   };
 
-  const { isOpen, onOpen, onClose } = useDisclose();
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -172,8 +153,8 @@ const Schedule: React.FC<ScheduleProps> = ({
 
   useEffect(() => {
     // @ts-ignore
-    const dailyEvents = scheduleGenerateFn(
-      weeklySchedule[moment().format("dddd") as keyof typeof weeklySchedule],
+    const dailyEvents = TimeTableGenerateFn(
+      weeklyTimeTable[moment().format("dddd") as keyof typeof weeklyTimeTable],
       currentDayOfWeek - 1
     );
     setItems(dailyEvents);
@@ -202,13 +183,12 @@ const Schedule: React.FC<ScheduleProps> = ({
           <Task
             {...props}
             mode={mode}
+            setTask={setTask}
             onOpen={() => {
-              onOpen();
+              onOpen()
             }}
           />
         )}
-        // fromHour={0} // Start hour for the timetable
-        // toHour={18}   // End hour for the timetable
         range={{ from: fromDate, till: toDate }} // Range from Monday to Friday of current week
         is12Hour={true}
         style={{
@@ -216,7 +196,7 @@ const Schedule: React.FC<ScheduleProps> = ({
             width: width - 35,
             paddingBottom: 40,
             paddingTop: 40,
-            backgroundColor: "#031430"
+            backgroundColor: "#031430",
           },
           nowLine: {
             dot: {
@@ -242,98 +222,9 @@ const Schedule: React.FC<ScheduleProps> = ({
           timeContainer: { backgroundColor: "#031430" },
         }}
       />
-      <Actionsheet isOpen={isOpen} onClose={onClose}>
-        <Actionsheet.Content backgroundColor="#031430">
-          <Box
-            className="gap-y-3 pb-5 focus:pb-80"
-            w="100%"
-            px={4}
-            justifyContent="center"
-          >
-            <Text className="text-text font-bold text-xl ">Edit</Text>
-            <TextInput
-              placeholder="Title"
-              value={title}
-              placeholderTextColor="#fafafa"
-              onChangeText={setTitle}
-              className="border border-gray-300 p-2 mb-2 rounded"
-            />
-            <TextInput
-              placeholder="Description"
-              value={description}
-              placeholderTextColor="#fafafa"
-              onChangeText={setDescription}
-              className="border border-gray-300 p-2 mb-2 rounded"
-            />
-            {/* <TextInput
-          placeholder="Time"
-          placeholderTextColor="#fafafa"
-          value={time}
-          onChangeText={setTime}
-          className="border border-gray-300 p-2 mb-4 rounded"
-        // /> */}
-            {/* <Text className="text-text font-semibold mb-4">
-                selected: {time.toLocaleString()}
-              </Text> */}
-
-            <Box className="flex flex-row justify-between mb-6 gap-x-6">
-              {/* <Button
-                  onPress={showTimepicker}
-                  title={timeStart ? timeStart.toLocaleString() : "Started"}
-                />
-                <Button
-                  onPress={showTimepicker}
-                  title={timeEnd ? timeEnd.toLocaleString() : "End"}
-                /> */}
-
-              {showPicker && (
-                <DateTimePicker
-                  value={
-                    actionSheetMode === "start"
-                      ? timeStart || new Date()
-                      : timeEnd || new Date()
-                  }
-                  mode="time"
-                  is24Hour={false}
-                  display="default"
-                  onChange={onTimeChange}
-                />
-              )}
-              <TouchableOpacity
-                className="bg-blue-500 p-2 rounded flex-1"
-                onPress={() => showTimepicker("start")}
-              >
-                <Text className="text-white text-center">
-                  {timeStart
-                    ? "Started: " + timeStart.toLocaleTimeString()
-                    : "Start Time"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-blue-500 p-2 rounded flex-1"
-                onPress={() => showTimepicker("end")}
-              >
-                <Text className="text-white text-center">
-                  {timeEnd
-                    ? "Ended: " + timeEnd.toLocaleTimeString()
-                    : "End Time"}
-                </Text>
-              </TouchableOpacity>
-            </Box>
-            <Box marginTop={40} className="mt-20">
-              <Button
-                // marginVertical: true/,
-                title={id ? "Update Event" : "Add Event"}
-                onPress={handleAddOrUpdate}
-                // className='bg-blue-500 text-white p-2 rounded mb-4'
-              />
-            </Box>
-          </Box>
-        </Actionsheet.Content>
-        {/* </KeyboardAvoidingView> */}
-      </Actionsheet>
+      <CURD_Tasks isOpen={isOpen} task={task} onClose={onClose} />
     </ScrollView>
   );
 };
 
-export default Schedule;
+export default TimeTable;
