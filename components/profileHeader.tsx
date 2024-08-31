@@ -34,7 +34,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       ) : (
         <View style={styles.profilePlaceholder}>
           <Image source={defaultImage} style={styles.profileImage} />
-          <Text className="text-gray-200 text-xl font-thin">Select an image</Text>
         </View>
       )}
       <Text style={styles.username} className="text-white text-3xl font-bold">

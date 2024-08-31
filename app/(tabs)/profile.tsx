@@ -26,6 +26,7 @@ import AuthScreen from "@/components/authScreen";
 import * as ImagePicker from "expo-image-picker";
 
 const ProfileComponent: React.FC = () => {
+  let user;
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
@@ -38,7 +39,7 @@ const ProfileComponent: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user && user.uid) {
+      if (user) {
         const userRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userRef);
         setUserInfo(userDoc.data());
@@ -48,19 +49,25 @@ const ProfileComponent: React.FC = () => {
     });
     return () => unsubscribe();
   }, []);
+  
 
   const handleAuthentication = async () => {
     setLoading(true);
+    console.log("user information:", email, password);
     try {
+      let user;
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        const response = await signInWithEmailAndPassword(auth, email, password);
+        console.log("🚀 ~ handleAuthentication ~ response:", response);
+        user = response.user;
       } else {
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
           password
         );
-        const { user } = userCredential;
+        console.log("🚀 ~ handleAuthentication ~ userCredential:", userCredential);
+        user = userCredential.user;
         await setDoc(doc(db, "users", user.uid), {
           username: name,
           email: user.email,
@@ -68,13 +75,23 @@ const ProfileComponent: React.FC = () => {
         });
         await updateProfile(user, { displayName: name });
       }
+  
+      // Fetch and set user info
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
+        setUserInfo(userDoc.data());
+      }
     } catch (error) {
-      setErr("Authentication failed. Please check your credentials.");
+            // @ts-ignore
+      console.log("🚀 ~ handleAuthentication ~ error:", error.message);
+      // @ts-ignore
+      setErr(error.message);
     } finally {
       setLoading(false);
     }
   };
-
+  
   const handleSignOut = async () => {
     try {
       await signOut(auth);

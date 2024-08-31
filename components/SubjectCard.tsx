@@ -1,43 +1,75 @@
-import { getAccentColor, getComplementaryColor } from "@/constants/Constants";
+import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+import { FontAwesome, MaterialIcons, Ionicons, Entypo, Feather } from '@expo/vector-icons';
+import { getAccentColor, getComplementaryColor } from "@/constants/Constants";
 
-export const SubjectCard = ({ item, onOpen, id = 1 }: any) => {
-  // const { isOpen, onOpen, onClose } = useDisclose();
-  let accent = getAccentColor(item.color);
-  let complementColor = getComplementaryColor(item.color);
-  // console.log("🚀 ~ SubjectCard ~ accent:", accent);
+interface SubjectCardProps {
+  item: {
+    title: string;
+    teacher: string;
+    room: string;
+    icon: string; // Icon name should match your defined icon sets
+    color: string;
+  };
+  onOpen: () => void;
+}
+
+const iconSets: { [key: string]: React.ComponentType<any> } = {
+  FontAwesome,
+  MaterialIcons,
+  Ionicons,
+  Entypo,
+  Feather
+};
+
+
+export const SubjectCard: React.FC<SubjectCardProps> = ({ item, onOpen }) => {
+  console.log("🚀 ~ item:", item)
+  const { title, teacher, room, icon, color } = item;
+
+  const iconSetKey = iconSets[icon] ? icon : 'FontAwesome'; // Default to 'FontAwesome' if not found
+  const IconComponent = iconSets[iconSetKey]; // Get the corresponding icon component
+
+  let accent = getAccentColor(color);
+  let complementColor = getComplementaryColor(color);
+
   return (
     <TouchableOpacity
-      onPress={(e) => {
-        onOpen();
-        return;
-      }}
-      activeOpacity={0.9} // Control opacity when pressed
+      onPress={onOpen}
+      activeOpacity={0.9}
       style={{
-        backgroundColor: item.color,
-        // width: "85%",
+        backgroundColor: color,
         height: 120,
         marginVertical: 3,
         borderRadius: 10,
-        elevation: 90,
+        elevation: 4, // Adjust elevation for shadow
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
       }}
-      className="w-[85%] flex flex-row mr-2 px-5 justify-start items-center"
     >
-      {/* //@ts-ignore */}
       <View
         style={{
           backgroundColor: accent,
+          width: '33%',
+          height: '80%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 8,
         }}
-        className=" w-2/6 h-5/6 flex items-center justify-center rounded-lg"
       >
-        <Text className=" text-6xl font-semibold">{item.icon}</Text>
+        {IconComponent ? (
+          <IconComponent name={icon} size={70} color={complementColor} />
+        ) : (
+          <Text>Icon not found</Text>
+        )}
       </View>
-      <View className="w-3/5 ml-3">
-        <Text style={{
-            color: complementColor
-        }} className=" font-bold text-2xl">{item.title}</Text>
-        <Text className="font-semibold text-xl">{item.teacher}</Text>
-        <Text>{item.room}</Text>
+      <View style={{ width: '67%', marginLeft: 12 }}>
+        <Text style={{ color: complementColor, fontWeight: 'bold', fontSize: 20 }}>
+          {title}
+        </Text>
+        <Text style={{ fontWeight: '600', fontSize: 18 }}>{teacher}</Text>
+        <Text>{room}</Text>
       </View>
     </TouchableOpacity>
   );

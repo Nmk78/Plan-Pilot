@@ -1,11 +1,16 @@
-import React from "react";
-import { Box, Center, HStack, Icon, IconButton, Stagger } from "native-base";
+import React, { useEffect, useState } from "react";
+import { Box, Center, HStack, Icon, IconButton, Stagger, useDisclose } from "native-base";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { StyleSheet, View } from "react-native";
 import Subjects from "./Subjects";
 import TimeTables from "./TimeTables";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { subjects } from "@/constants/Constants";
+import { collection, doc, getDocs, query, setDoc, where } from "@firebase/firestore";
+import { db } from "@/firebaseconfig";
+import Toast from "./Toast";
+import CURD_Subjects from "./CURD_Subjects";
+import { getAuth } from "firebase/auth";
 
 interface ProfileActionsProps {
   isOpen: boolean;
@@ -22,6 +27,18 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
 }) => {
   const Tab = createMaterialTopTabNavigator();
 
+  const { isOpen:isDiscOpen, onOpen, onClose } = useDisclose();
+
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      setUserId(user.uid);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       <Tab.Navigator
@@ -33,10 +50,14 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
       >
         <Tab.Screen
           name="Subjects"
+          // component={() => <Subjects mode="subject" err={err} onEditSubject={onEditSubject} />}
           component={() => <Subjects mode="subject" />}
         />
         <Tab.Screen name="Timetables" component={TimeTables} />
       </Tab.Navigator>
+
+      {/* <Toast message={err} visible={!!err} /> */}
+
       <Center position="absolute" bottom={10} right={5}>
         <Box alignItems="end" minH="220">
           <Stagger
@@ -92,6 +113,8 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
                   color="warmGray.50"
                 />
               }
+              onPress={onOpen}
+
             />
             <IconButton
               mb="4"
@@ -129,6 +152,14 @@ const ProfileActions: React.FC<ProfileActionsProps> = ({
           />
         </HStack>
       </Center>
+      <CURD_Subjects
+            isOpen={isDiscOpen}
+            userId={userId}
+            // onAddSubject={onAddSubject}
+            // err={err}
+            //// subject={task}
+            onClose={onClose}
+          />
     </View>
   );
 };
